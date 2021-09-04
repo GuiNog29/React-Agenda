@@ -18,8 +18,10 @@ export function getCalendarsEndPoint(): Promise<ICalendar[]> {
   });
 }
 
-export function getEventsEndPoint(): Promise<IEvent[]> {
-  return fetch('http://localhost:8080/events').then(response => {
+export function getEventsEndPoint(from: string, to: string): Promise<IEvent[]> {
+  return fetch(
+    `http://localhost:8080/events?date_gte=${from}&date_lte=${to}&_sort=date,time`
+  ).then(response => {
     return response.json();
   });
 }

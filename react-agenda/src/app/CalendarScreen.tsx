@@ -12,6 +12,13 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { Icon } from '@material-ui/core';
 import { IconButton } from '@material-ui/core';
 import { Avatar } from '@material-ui/core';
+import { useEffect, useState } from 'react';
+import {
+  getCalendarsEndPoint,
+  getEventsEndPoint,
+  ICalendar,
+  IEvent,
+} from './backend';
 
 const DAYS_OF_WEEK = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
@@ -19,15 +26,57 @@ const useStyles = makeStyles({
   table: {
     borderTop: '1px solid rgb(224, 224, 224)',
     minHeight: '100%',
+    tableLayout: 'fixed',
     '& td ~ td, & th ~ th': {
       borderLeft: '1px solid rgb(224, 224, 224)',
     },
+    '& td': {
+      paddin: '8px 4px',
+      verticalAlign: 'top',
+      overflow: 'hidden',
+    },
+  },
+  dayOfMonth: {
+    fontWeight: 500,
+    marginBottom: '4px',
+  },
+  event: {
+    display: 'flex',
+    alignItems: 'center',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    textAlign: 'left',
+    whiteSpace: 'nowrap',
+    margin: '4px 0',
+  },
+  eventBackground: {
+    display: 'inline=block',
+    borderRadius: '4px',
+    color: 'white',
+    padding: '2px 4px',
   },
 });
 
 export default function CalendarScreen() {
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const [calendars, setCalendars] = useState<ICalendar[]>([]);
+
   const classes = useStyles();
-  const weeks = generateCalendar(getToday());
+  const weeks = generateCalendar(getToday(), events, calendars);
+
+  const firstDate = weeks[0][0].date;
+  const lastDate = weeks[weeks.length - 1][6].date;
+
+  useEffect(() => {
+    Promise.all([
+      getCalendarsEndPoint(),
+      getEventsEndPoint(firstDate, lastDate),
+    ]).then(([calendars, events]) => {
+      setCalendars(calendars);
+      setEvents(events);
+    });
+  }, [firstDate, lastDate]);
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">
@@ -42,12 +91,11 @@ export default function CalendarScreen() {
           Novo Evento
         </Button>
 
-        <Box marginTop="60px">
+        <Box marginTop="64px">
           <h3>Agendas</h3>
+          <FormControlLabel control={<Checkbox />} label="Pessoal" />
+          <FormControlLabel control={<Checkbox />} label="Trabalho" />
         </Box>
-
-        <FormControlLabel control={<Checkbox />} label="Pessoal" />
-        <FormControlLabel control={<Checkbox />} label="Trabalho" />
       </Box>
 
       <TableContainer component={'div'}>
@@ -90,7 +138,36 @@ export default function CalendarScreen() {
               <TableRow key={i}>
                 {week.map(cell => (
                   <TableCell align="center" key={cell.date}>
-                    {cell.date}
+                    <div className={classes.dayOfMonth}>{cell.dayOfMonth}</div>
+
+                    {cell.events.map(event => {
+                      const color = event.calendar.color;
+
+                      return (
+                        <button className={classes.event}>
+                          {
+                            <>
+                              <Icon style={{ color }} fontSize="inherit">
+                                watch_later
+                              </Icon>
+                              <Box component="span" margin="0 4px">
+                                {event.time}
+                              </Box>
+                            </>
+                          }
+                          {event.time ? (
+                            <span>{event.desc}</span>
+                          ) : (
+                            <span
+                              className={classes.eventBackground}
+                              style={{ background: color }}
+                            >
+                              {event.desc}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </TableCell>
                 ))}
               </TableRow>
@@ -104,9 +181,15 @@ export default function CalendarScreen() {
 
 interface ICalendarCell {
   date: string;
+  dayOfMonth: number;
+  events: (IEvent & { calendar: ICalendar })[];
 }
 
-function generateCalendar(date: string): ICalendarCell[][] {
+function generateCalendar(
+  date: string,
+  allEvents: IEvent[],
+  calendars: ICalendar[]
+): ICalendarCell[][] {
   const weeks: ICalendarCell[][] = [];
   const jsDate = new Date(date + 'T12:00:00');
   const currentMonth = jsDate.getMonth();
@@ -126,7 +209,16 @@ function generateCalendar(date: string): ICalendarCell[][] {
         .padStart(2, '0');
       const formatDay = currentDay.getDate().toString().padStart(2, '0');
       const isoDate = `${currentDay.getFullYear()}-${formatMonth}-${formatDay}`;
-      week.push({ date: isoDate });
+      week.push({
+        dayOfMonth: currentDay.getDate(),
+        date: isoDate,
+        events: allEvents
+          .filter(e => e.date === isoDate)
+          .map(e => {
+            const calendar = calendars.find(cal => cal.id === e.calendarId)!;
+            return { ...e, calendar };
+          }),
+      });
       currentDay.setDate(currentDay.getDate() + 1);
     }
     weeks.push(week);
@@ -136,5 +228,5 @@ function generateCalendar(date: string): ICalendarCell[][] {
 }
 
 function getToday() {
-  return '2021-09-04';
+  return '2021-06-03';
 }
