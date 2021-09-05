@@ -31,9 +31,9 @@ const useStyles = makeStyles({
       borderLeft: '1px solid rgb(224, 224, 224)',
     },
     '& td': {
-      paddin: '8px 4px',
       verticalAlign: 'top',
       overflow: 'hidden',
+      padding: '8px 4px',
     },
   },
   dayOfMonth: {
@@ -51,19 +51,25 @@ const useStyles = makeStyles({
     margin: '4px 0',
   },
   eventBackground: {
-    display: 'inline=block',
-    borderRadius: '4px',
+    display: 'inline-block',
     color: 'white',
     padding: '2px 4px',
+    borderRadius: '4px',
   },
 });
 
 export default function CalendarScreen() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
+  const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
 
   const classes = useStyles();
-  const weeks = generateCalendar(getToday(), events, calendars);
+  const weeks = generateCalendar(
+    getToday(),
+    events,
+    calendars,
+    calendarsSelected
+  );
 
   const firstDate = weeks[0][0].date;
   const lastDate = weeks[weeks.length - 1][6].date;
@@ -73,10 +79,17 @@ export default function CalendarScreen() {
       getCalendarsEndPoint(),
       getEventsEndPoint(firstDate, lastDate),
     ]).then(([calendars, events]) => {
+      setCalendarsSelected(calendars.map(() => true));
       setCalendars(calendars);
       setEvents(events);
     });
   }, [firstDate, lastDate]);
+
+  function toggleCalendar(i: number) {
+    const newValue = [...calendarsSelected];
+    newValue[i] = !newValue[i];
+    setCalendarsSelected(newValue);
+  }
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">
@@ -93,14 +106,26 @@ export default function CalendarScreen() {
 
         <Box marginTop="64px">
           <h3>Agendas</h3>
-          <FormControlLabel control={<Checkbox />} label="Pessoal" />
-          <FormControlLabel control={<Checkbox />} label="Trabalho" />
+          {calendars.map((calendar, i) => (
+            <div key={calendar.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    style={{ color: calendar.color }}
+                    checked={calendarsSelected[i]}
+                    onChange={() => toggleCalendar(i)}
+                  />
+                }
+                label={calendar.name}
+              />
+            </div>
+          ))}
         </Box>
       </Box>
 
-      <TableContainer component={'div'}>
+      <Box display="flex" flex="1" flexDirection="column">
         <Box display="flex" alignItems="center" padding="8px 16px">
-          <Box flex="1">
+          <Box>
             <IconButton aria-label="Previous Month">
               <Icon>chevron_left</Icon>
             </IconButton>
@@ -108,10 +133,10 @@ export default function CalendarScreen() {
             <IconButton aria-label="Next Month">
               <Icon>chevron_right</Icon>
             </IconButton>
+          </Box>
 
-            <Box component="h3" marginLeft="16px" flex="1">
-              Setembro de 2021
-            </Box>
+          <Box flex="1" component="h3" marginLeft="16px">
+            Setembro de 2021
           </Box>
 
           <IconButton aria-label="Next Month">
@@ -119,76 +144,79 @@ export default function CalendarScreen() {
           </IconButton>
         </Box>
 
-        <Table
-          className={classes.table}
-          size="small"
-          aria-label="a dense table"
-        >
-          <TableHead>
-            <TableRow>
-              {DAYS_OF_WEEK.map(day => (
-                <TableCell align="center" key={day}>
-                  {day}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {weeks.map((week, i) => (
-              <TableRow key={i}>
-                {week.map(cell => (
-                  <TableCell align="center" key={cell.date}>
-                    <div className={classes.dayOfMonth}>{cell.dayOfMonth}</div>
-
-                    {cell.events.map(event => {
-                      const color = event.calendar.color;
-
-                      return (
-                        <button className={classes.event}>
-                          {
-                            <>
-                              <Icon style={{ color }} fontSize="inherit">
-                                watch_later
-                              </Icon>
-                              <Box component="span" margin="0 4px">
-                                {event.time}
-                              </Box>
-                            </>
-                          }
-                          {event.time ? (
-                            <span>{event.desc}</span>
-                          ) : (
-                            <span
-                              className={classes.eventBackground}
-                              style={{ background: color }}
-                            >
-                              {event.desc}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+        <TableContainer style={{ flex: '1' }} component={'div'}>
+          <Table className={classes.table} aria-label="simple table">
+            <TableHead>
+              <TableRow>
+                {DAYS_OF_WEEK.map(day => (
+                  <TableCell align="center" key={day}>
+                    {day}
                   </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {weeks.map((week, i) => (
+                <TableRow key={i}>
+                  {week.map(cell => (
+                    <TableCell align="center" key={cell.date}>
+                      <div className={classes.dayOfMonth}>
+                        {cell.dayOfMonth}
+                      </div>
+
+                      {cell.events.map(event => {
+                        const color = event.calendar.color;
+
+                        return (
+                          <button key={event.id} className={classes.event}>
+                            {
+                              <>
+                                <Icon style={{ color }} fontSize="inherit">
+                                  watch_later
+                                </Icon>
+                                <Box component="span" margin="0 4px">
+                                  {event.time}
+                                </Box>
+                              </>
+                            }
+                            {event.time ? (
+                              <span>{event.desc}</span>
+                            ) : (
+                              <span
+                                className={classes.eventBackground}
+                                style={{ background: color }}
+                              >
+                                {event.desc}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
 }
 
+type IEventWithCalendar = IEvent & { calendar: ICalendar };
+
 interface ICalendarCell {
   date: string;
   dayOfMonth: number;
-  events: (IEvent & { calendar: ICalendar })[];
+  events: IEventWithCalendar[];
 }
 
 function generateCalendar(
   date: string,
   allEvents: IEvent[],
-  calendars: ICalendar[]
+  calendars: ICalendar[],
+  calendarSelected: boolean[]
 ): ICalendarCell[][] {
   const weeks: ICalendarCell[][] = [];
   const jsDate = new Date(date + 'T12:00:00');
@@ -207,17 +235,26 @@ function generateCalendar(
       const formatMonth = (currentDay.getMonth() + 1)
         .toString()
         .padStart(2, '0');
+
       const formatDay = currentDay.getDate().toString().padStart(2, '0');
       const isoDate = `${currentDay.getFullYear()}-${formatMonth}-${formatDay}`;
+
+      const events: IEventWithCalendar[] = [];
+      for (const event of allEvents) {
+        if (event.date === isoDate) {
+          const calendarIndex = calendars.findIndex(
+            cal => cal.id === event.calendarId
+          );
+          if (calendarSelected[calendarIndex]) {
+            events.push({ ...event, calendar: calendars[calendarIndex] });
+          }
+        }
+      }
+
       week.push({
         dayOfMonth: currentDay.getDate(),
         date: isoDate,
-        events: allEvents
-          .filter(e => e.date === isoDate)
-          .map(e => {
-            const calendar = calendars.find(cal => cal.id === e.calendarId)!;
-            return { ...e, calendar };
-          }),
+        events,
       });
       currentDay.setDate(currentDay.getDate() + 1);
     }
