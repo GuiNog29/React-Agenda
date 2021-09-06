@@ -19,42 +19,53 @@ import {
   ICalendar,
   IEvent,
 } from './backend';
+import { useParams } from 'react-router';
+import { Link } from 'react-router-dom';
+import { formatMonth, modifyMonths } from './DateFunctions';
 
 const DAYS_OF_WEEK = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
 const useStyles = makeStyles({
   table: {
-    borderTop: '1px solid rgb(224, 224, 224)',
-    minHeight: '100%',
-    tableLayout: 'fixed',
-    '& td ~ td, & th ~ th': {
-      borderLeft: '1px solid rgb(224, 224, 224)',
+    borderTop: "1px solid rgb(224, 224, 224)",
+    minHeight: "100%",
+    tableLayout: "fixed",
+    "& td ~ td, & th ~ th": {
+      borderLeft: "1px solid rgb(224, 224, 224)",
     },
-    '& td': {
-      verticalAlign: 'top',
-      overflow: 'hidden',
-      padding: '8px 4px',
+    "& td": {
+      verticalAlign: "top",
+      overflow: "hidden",
+      padding: "8px 4px",
     },
   },
   dayOfMonth: {
+    display: "inline-block",
     fontWeight: 500,
-    marginBottom: '4px',
+    width: "24px",
+    lineHeight: "24px",
+    marginBottom: "4px",
+    borderRadius: "50%",
+    "&.today": {
+      backgroundColor: "#3f51b5",
+      color: "white",
+    },
   },
   event: {
-    display: 'flex',
-    alignItems: 'center',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    whiteSpace: 'nowrap',
-    margin: '4px 0',
+    display: "flex",
+    alignItems: "center",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    textAlign: "left",
+    whiteSpace: "nowrap",
+    margin: "4px 0",
   },
   eventBackground: {
-    display: 'inline-block',
-    color: 'white',
-    padding: '2px 4px',
-    borderRadius: '4px',
+    display: "inline-block",
+    color: "white",
+    padding: "2px 4px",
+    borderRadius: "4px",
   },
 });
 
@@ -63,9 +74,11 @@ export default function CalendarScreen() {
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
 
+  const { month } = useParams<{ month: string }>();
+
   const classes = useStyles();
   const weeks = generateCalendar(
-    getToday(),
+    month + '-01',
     events,
     calendars,
     calendarsSelected
@@ -98,14 +111,14 @@ export default function CalendarScreen() {
         width="16em"
         padding="8px 16px"
       >
-        <h2>React Agenda</h2>
+        <h2>React Schedule</h2>
 
-        <Button variant="outlined" color="primary">
-          Novo Evento
+        <Button variant="contained" color="primary">
+          New Event
         </Button>
 
         <Box marginTop="64px">
-          <h3>Agendas</h3>
+          <h3>Schedule</h3>
           {calendars.map((calendar, i) => (
             <div key={calendar.id}>
               <FormControlLabel
@@ -126,17 +139,25 @@ export default function CalendarScreen() {
       <Box display="flex" flex="1" flexDirection="column">
         <Box display="flex" alignItems="center" padding="8px 16px">
           <Box>
-            <IconButton aria-label="Previous Month">
+            <IconButton
+              aria-label="Previous Month"
+              component={Link}
+              to={'/calendar/' + modifyMonths(month, -1)}
+            >
               <Icon>chevron_left</Icon>
             </IconButton>
 
-            <IconButton aria-label="Next Month">
+            <IconButton
+              aria-label="Next Month"
+              component={Link}
+              to={'/calendar/' + modifyMonths(month, +1)}
+            >
               <Icon>chevron_right</Icon>
             </IconButton>
           </Box>
 
           <Box flex="1" component="h3" marginLeft="16px">
-            Setembro de 2021
+            {formatMonth(month)}
           </Box>
 
           <IconButton aria-label="Next Month">
@@ -262,8 +283,4 @@ function generateCalendar(
   } while (currentDay.getMonth() === currentMonth);
 
   return weeks;
-}
-
-function getToday() {
-  return '2021-06-03';
 }
