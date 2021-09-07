@@ -83,16 +83,15 @@
       "id": 11
     },
     {
-      "date": "2021-06-11",
-      "desc": "aaaaa",
-      "calendarId": 2,
-      "id": 12
-    },
-    {
       "date": "2021-06-03",
-      "desc": "dawdawa",
+      "desc": "cavalo",
       "calendarId": 1,
-      "id": 13
+      "id": 13,
+      "calendar": {
+        "id": 1,
+        "name": "Personal",
+        "color": "#8E24AA"
+      }
     }
   ]
 }

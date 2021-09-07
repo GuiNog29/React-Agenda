@@ -8,8 +8,15 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
-import { createEventEndPoint, ICalendar, IEditingEvent } from './backend';
+import {
+  createEventEndPoint,
+  deleteEventEndPoint,
+  ICalendar,
+  IEditingEvent,
+  updateEventEndPoint,
+} from './backend';
 import React, { useEffect, useRef, useState } from 'react';
+import { Box } from '@material-ui/core';
 
 interface IEventFormDialogProps {
   event: IEditingEvent | null;
@@ -33,6 +40,8 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
     setErrors({});
   }, [props.event]);
 
+  const isNew = !event?.id;
+
   function validate(): boolean {
     if (event) {
       const currentErrors: IValidationErrors = {};
@@ -54,8 +63,18 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
     evt.preventDefault();
     if (event) {
       if (validate()) {
-        createEventEndPoint(event).then(props.onSave);
+        if (isNew) {
+          createEventEndPoint(event).then(props.onSave);
+        } else {
+          updateEventEndPoint(event).then(props.onSave);
+        }
       }
+    }
+  }
+
+  function deleteEvent() {
+    if (event) {
+      deleteEventEndPoint(event.id!).then(props.onSave);
     }
   }
 
@@ -67,7 +86,9 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
         aria-labelledby="form-dialog-title"
       >
         <form onSubmit={save}>
-          <DialogTitle id="form-dialog-title">Create Event</DialogTitle>
+          <DialogTitle id="form-dialog-title">
+            {isNew ? 'Create Event' : 'Update Event'}
+          </DialogTitle>
           <DialogContent>
             {event && (
               <>
@@ -130,10 +151,16 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
             )}
           </DialogContent>
           <DialogActions>
-            <Button type="button" onClick={props.onCancel}>
+            {!isNew && (
+              <Button type="button" onClick={deleteEvent} color="secondary" variant="contained">
+                Delete
+              </Button>
+            )}
+            <Box flex="1"></Box>
+            <Button type="button" onClick={props.onCancel} variant="contained">
               Cancel
             </Button>
-            <Button type="submit" color="primary">
+            <Button type="submit" color="primary" variant="contained">
               Save
             </Button>
           </DialogActions>

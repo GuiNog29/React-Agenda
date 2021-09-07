@@ -54,9 +54,9 @@ export default function CalendarScreen() {
     setCalendarsSelected(newValue);
   }
 
-  function openNewEvent() {
+  function openNewEvent(date: string) {
     setEditingEvent({
-      date: getToday(),
+      date,
       desc: '',
       calendarId: calendars[0].id,
     });
@@ -71,7 +71,11 @@ export default function CalendarScreen() {
       >
         <h2>React Schedule</h2>
 
-        <Button variant="contained" color="primary" onClick={openNewEvent}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => openNewEvent(getToday())}
+        >
           New Event
         </Button>
 
@@ -85,7 +89,11 @@ export default function CalendarScreen() {
       <Box display="flex" flex="1" flexDirection="column">
         <CalendarHeader month={month} />
 
-        <Calendar weeks={weeks} />
+        <Calendar
+          weeks={weeks}
+          onClickDay={openNewEvent}
+          onClickEvent={setEditingEvent}
+        />
 
         <EventFormDialog
           event={editingEvent}
