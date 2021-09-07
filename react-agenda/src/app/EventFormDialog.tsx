@@ -8,39 +8,62 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
-import { ICalendar } from './backend';
-import React, { useEffect, useState } from 'react';
-
-export interface IEditingEvent {
-  id?: number;
-  date: string;
-  time?: string;
-  desc: string;
-  calendarId: number;
-}
+import { createEventEndPoint, ICalendar, IEditingEvent } from './backend';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface IEventFormDialogProps {
   event: IEditingEvent | null;
   calendars: ICalendar[];
-  onCLose: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+}
+
+interface IValidationErrors {
+  [field: string]: string;
 }
 
 export default function EventFormDialog(props: IEventFormDialogProps) {
   const [event, setEvent] = useState<IEditingEvent | null>(props.event);
+  const [errors, setErrors] = useState<IValidationErrors>({});
+  const inputDate = useRef<HTMLInputElement | null>();
+  const inputDesc = useRef<HTMLInputElement | null>();
 
   useEffect(() => {
     setEvent(props.event);
+    setErrors({});
   }, [props.event]);
+
+  function validate(): boolean {
+    if (event) {
+      const currentErrors: IValidationErrors = {};
+      if (!event.date) {
+        currentErrors['date'] = 'Date must be filled in';
+        inputDate.current?.focus();
+      }
+      if (!event.desc) {
+        currentErrors['desc'] = 'Description must be filled in';
+        inputDesc.current?.focus();
+      }
+      setErrors(currentErrors);
+      return Object.keys(currentErrors).length === 0;
+    }
+    return false;
+  }
 
   function save(evt: React.FormEvent) {
     evt.preventDefault();
+    if (event) {
+      if (validate()) {
+        createEventEndPoint(event).then(props.onSave);
+      }
+    }
   }
 
   return (
     <div>
       <Dialog
         open={!!event}
-        onClose={props.onCLose}
+        onClose={props.onCancel}
         aria-labelledby="form-dialog-title"
       >
         <form onSubmit={save}>
@@ -49,6 +72,7 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
             {event && (
               <>
                 <TextField
+                  inputRef={inputDate}
                   type="date"
                   margin="normal"
                   label="Date"
@@ -57,8 +81,11 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
                   onChange={evt =>
                     setEvent({ ...event, date: evt.target.value })
                   }
+                  error={!!errors.date}
+                  helperText={errors.date}
                 />
                 <TextField
+                  inputRef={inputDesc}
                   autoFocus
                   margin="normal"
                   label="Description"
@@ -67,6 +94,8 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
                   onChange={evt =>
                     setEvent({ ...event, desc: evt.target.value })
                   }
+                  error={!!errors.desc}
+                  helperText={errors.desc}
                 />
                 <TextField
                   type="time"
@@ -101,7 +130,7 @@ export default function EventFormDialog(props: IEventFormDialogProps) {
             )}
           </DialogContent>
           <DialogActions>
-            <Button type="button" onClick={props.onCLose}>
+            <Button type="button" onClick={props.onCancel}>
               Cancel
             </Button>
             <Button type="submit" color="primary">

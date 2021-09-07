@@ -5,13 +5,14 @@ import {
   getCalendarsEndPoint,
   getEventsEndPoint,
   ICalendar,
+  IEditingEvent,
   IEvent,
 } from './backend';
 import { useParams } from 'react-router';
 import CalendarsView from './CalendarsView';
 import CalendarHeader from './CalendarHeader';
 import Calendar, { ICalendarCell, IEventWithCalendar } from './Calendar';
-import EventFormDialog, { IEditingEvent } from './EventFormDialog';
+import EventFormDialog from './EventFormDialog';
 import { getToday } from './DateFunctions';
 
 export default function CalendarScreen() {
@@ -42,6 +43,10 @@ export default function CalendarScreen() {
       setEvents(events);
     });
   }, [firstDate, lastDate]);
+
+  function refreshEvents() {
+    getEventsEndPoint(firstDate, lastDate).then(setEvents);
+  }
 
   function toggleCalendar(i: number) {
     const newValue = [...calendarsSelected];
@@ -85,7 +90,11 @@ export default function CalendarScreen() {
         <EventFormDialog
           event={editingEvent}
           calendars={calendars}
-          onCLose={() => setEditingEvent(null)}
+          onCancel={() => setEditingEvent(null)}
+          onSave={() => {
+            setEditingEvent(null);
+            refreshEvents();
+          }}
         />
       </Box>
     </Box>

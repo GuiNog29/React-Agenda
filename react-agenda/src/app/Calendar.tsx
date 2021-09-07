@@ -88,7 +88,7 @@ export default function Calendar(props: ICalendarProps) {
 
                     return (
                       <button key={event.id} className={classes.event}>
-                        {
+                        {event.time && (
                           <>
                             <Icon style={{ color }} fontSize="inherit">
                               watch_later
@@ -97,13 +97,13 @@ export default function Calendar(props: ICalendarProps) {
                               {event.time}
                             </Box>
                           </>
-                        }
+                        )}
                         {event.time ? (
                           <span>{event.desc}</span>
                         ) : (
                           <span
                             className={classes.eventBackground}
-                            style={{ background: color }}
+                            style={{ backgroundColor: color }}
                           >
                             {event.desc}
                           </span>
