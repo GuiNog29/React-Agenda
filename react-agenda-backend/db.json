@@ -2,12 +2,12 @@
   "calendars": [
     {
       "id": 1,
-      "name": "Pessoal",
+      "name": "Personal",
       "color": "#8E24AA"
     },
     {
       "id": 2,
-      "name": "Trabalho",
+      "name": "Work",
       "color": "#7CB342"
     }
   ],
@@ -74,6 +74,24 @@
       "date": "2021-06-17",
       "desc": "Teste 2",
       "calendarId": 1
+    },
+    {
+      "date": "2021-06-04",
+      "desc": "teste",
+      "calendarId": 1,
+      "time": "12:00",
+      "id": 11
+    },
+    {
+      "date": "2021-06-03",
+      "desc": "cavalo",
+      "calendarId": 1,
+      "id": 13,
+      "calendar": {
+        "id": 1,
+        "name": "Personal",
+        "color": "#8E24AA"
+      }
     }
   ]
 }
