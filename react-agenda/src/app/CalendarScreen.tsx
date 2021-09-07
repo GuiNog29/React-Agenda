@@ -11,11 +11,14 @@ import { useParams } from 'react-router';
 import CalendarsView from './CalendarsView';
 import CalendarHeader from './CalendarHeader';
 import Calendar, { ICalendarCell, IEventWithCalendar } from './Calendar';
+import EventFormDialog, { IEditingEvent } from './EventFormDialog';
+import { getToday } from './DateFunctions';
 
 export default function CalendarScreen() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
+  const [editingEvent, setEditingEvent] = useState<IEditingEvent | null>(null);
 
   const { month } = useParams<{ month: string }>();
 
@@ -46,6 +49,14 @@ export default function CalendarScreen() {
     setCalendarsSelected(newValue);
   }
 
+  function openNewEvent() {
+    setEditingEvent({
+      date: getToday(),
+      desc: '',
+      calendarId: calendars[0].id,
+    });
+  }
+
   return (
     <Box display="flex" height="100%" alignItems="stretch">
       <Box
@@ -55,7 +66,7 @@ export default function CalendarScreen() {
       >
         <h2>React Schedule</h2>
 
-        <Button variant="contained" color="primary">
+        <Button variant="contained" color="primary" onClick={openNewEvent}>
           New Event
         </Button>
 
@@ -70,6 +81,12 @@ export default function CalendarScreen() {
         <CalendarHeader month={month} />
 
         <Calendar weeks={weeks} />
+
+        <EventFormDialog
+          event={editingEvent}
+          calendars={calendars}
+          onCLose={() => setEditingEvent(null)}
+        />
       </Box>
     </Box>
   );
