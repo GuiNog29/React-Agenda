@@ -7,33 +7,34 @@ import {
 } from 'react-router-dom';
 import { getToday } from './DateFunctions';
 import { useEffect, useState } from 'react';
-import { getUserEndPoint } from './backend';
+import { getUserEndPoint, IUser } from './backend';
 import LoginScreen from './LoginScreen';
 
 function App() {
   const month = getToday().substring(0, 7);
-  const [hasSession, setHasSession] = useState(false);
+  const [user, setUser] = useState<IUser | null>(null);
 
   useEffect(() => {
-    getUserEndPoint().then(
-      () => setHasSession(true),
-      () => setHasSession(false)
-    );
+    getUserEndPoint().then(setUser, singOut);
   }, []);
 
-  if (hasSession) {
+  function singOut() {
+    setUser(null);
+  }
+
+  if (user) {
     return (
       <Router>
         <Switch>
           <Route path="/calendar/:month">
-            <CalendarScreen />;
+            <CalendarScreen user={user} onSingOut={singOut} />;
           </Route>
           <Redirect to={{ pathname: '/calendar/' + month }} />
         </Switch>
       </Router>
     );
   } else {
-    return <LoginScreen />;
+    return <LoginScreen onSignIn={setUser} />;
   }
 }
 

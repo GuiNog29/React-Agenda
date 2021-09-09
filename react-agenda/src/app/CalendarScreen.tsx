@@ -1,21 +1,27 @@
 import { Box } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { useEffect, useState } from 'react';
-import {
-  getCalendarsEndPoint,
-  getEventsEndPoint,
-  ICalendar,
-  IEditingEvent,
-  IEvent,
-} from './backend';
 import { useParams } from 'react-router';
 import CalendarsView from './CalendarsView';
 import CalendarHeader from './CalendarHeader';
 import Calendar, { ICalendarCell, IEventWithCalendar } from './Calendar';
 import EventFormDialog from './EventFormDialog';
 import { getToday } from './DateFunctions';
+import {
+  getCalendarsEndPoint,
+  getEventsEndPoint,
+  ICalendar,
+  IEditingEvent,
+  IEvent,
+  IUser,
+} from './backend';
 
-export default function CalendarScreen() {
+interface ICalendarScreenProps {
+  onSingOut: () => void;
+  user: IUser;
+}
+
+export default function CalendarScreen(props: ICalendarScreenProps) {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
@@ -87,7 +93,11 @@ export default function CalendarScreen() {
       </Box>
 
       <Box display="flex" flex="1" flexDirection="column">
-        <CalendarHeader month={month} />
+        <CalendarHeader
+          month={month}
+          user={props.user}
+          onSingOut={props.onSingOut}
+        />
 
         <Calendar
           weeks={weeks}
