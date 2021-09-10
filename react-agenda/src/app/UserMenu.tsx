@@ -4,13 +4,9 @@ import { Avatar } from '@material-ui/core';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/styles';
-import React, { useState } from 'react';
-import { IUser, singOutEndPoint } from './backend';
-
-interface IUserMenu {
-  onSingOut: () => void;
-  user: IUser;
-}
+import React, { useContext, useState } from 'react';
+import { authContext } from './authContext';
+import { singOutEndPoint } from './backend';
 
 const useStyles = makeStyles({
   userDetails: {
@@ -26,7 +22,9 @@ const useStyles = makeStyles({
   },
 });
 
-export default function UserMenu(props: IUserMenu) {
+export default function UserMenu() {
+  const { user, onSignOut } = useContext(authContext);
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const classes = useStyles();
 
@@ -38,9 +36,9 @@ export default function UserMenu(props: IUserMenu) {
     setAnchorEl(null);
   };
 
-  function singOut() {
+  function signOut() {
     singOutEndPoint();
-    props.onSingOut();
+    onSignOut();
   }
 
   return (
@@ -66,11 +64,11 @@ export default function UserMenu(props: IUserMenu) {
             <Avatar>
               <Icon>person</Icon>
             </Avatar>
-            <div>{props.user.name}</div>
-            <small>{props.user.email}</small>
+            <div>{user.name}</div>
+            <small>{user.email}</small>
           </Box>
 
-          <MenuItem onClick={singOut}>Logout</MenuItem>
+          <MenuItem onClick={signOut}>Logout</MenuItem>
         </Menu>
       </div>
     </IconButton>

@@ -13,15 +13,9 @@ import {
   ICalendar,
   IEditingEvent,
   IEvent,
-  IUser,
 } from './backend';
 
-interface ICalendarScreenProps {
-  onSingOut: () => void;
-  user: IUser;
-}
-
-export default function CalendarScreen(props: ICalendarScreenProps) {
+export default function CalendarScreen() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
@@ -93,11 +87,7 @@ export default function CalendarScreen(props: ICalendarScreenProps) {
       </Box>
 
       <Box display="flex" flex="1" flexDirection="column">
-        <CalendarHeader
-          month={month}
-          user={props.user}
-          onSingOut={props.onSingOut}
-        />
+        <CalendarHeader month={month} />
 
         <Calendar
           weeks={weeks}
