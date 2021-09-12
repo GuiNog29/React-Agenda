@@ -1,10 +1,10 @@
 import { Box } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
-import CalendarsView from './CalendarsView';
-import CalendarHeader from './CalendarHeader';
-import Calendar, { ICalendarCell, IEventWithCalendar } from './Calendar';
+import { CalendarsView } from './CalendarsView';
+import { CalendarHeader } from './CalendarHeader';
+import { Calendar, ICalendarCell, IEventWithCalendar } from './Calendar';
 import EventFormDialog from './EventFormDialog';
 import { getToday } from './DateFunctions';
 import {
@@ -23,12 +23,14 @@ export default function CalendarScreen() {
 
   const { month } = useParams<{ month: string }>();
 
-  const weeks = generateCalendar(
-    month + '-01',
-    events,
-    calendars,
-    calendarsSelected
-  );
+  const weeks = useMemo(() => {
+    return generateCalendar(
+      month + '-01',
+      events,
+      calendars,
+      calendarsSelected
+    );
+  }, [month, events, calendars, calendarsSelected]);
 
   const firstDate = weeks[0][0].date;
   const lastDate = weeks[weeks.length - 1][6].date;
@@ -48,19 +50,25 @@ export default function CalendarScreen() {
     getEventsEndPoint(firstDate, lastDate).then(setEvents);
   }
 
-  function toggleCalendar(i: number) {
-    const newValue = [...calendarsSelected];
-    newValue[i] = !newValue[i];
-    setCalendarsSelected(newValue);
-  }
+  const toggleCalendar = useCallback(
+    (i: number) => {
+      const newValue = [...calendarsSelected];
+      newValue[i] = !newValue[i];
+      setCalendarsSelected(newValue);
+    },
+    [calendarsSelected]
+  );
 
-  function openNewEvent(date: string) {
-    setEditingEvent({
-      date,
-      desc: '',
-      calendarId: calendars[0].id,
-    });
-  }
+  const openNewEvent = useCallback(
+    (date: string) => {
+      setEditingEvent({
+        date,
+        desc: '',
+        calendarId: calendars[0].id,
+      });
+    },
+    [calendars]
+  );
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">
