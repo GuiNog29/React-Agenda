@@ -11,81 +11,9 @@ import {
   getCalendarsEndPoint,
   getEventsEndPoint,
   ICalendar,
-  IEditingEvent,
   IEvent,
 } from './backend';
-
-interface ICalendarScreenState {
-  calendars: ICalendar[];
-  calendarsSelected: boolean[];
-  events: IEvent[];
-  editingEvent: IEditingEvent | null;
-}
-
-type ICalendarScreenAction =
-  | {
-      type: 'load';
-      payload: { events: IEvent[]; calendars?: ICalendar[] };
-    }
-  | {
-      type: 'edit';
-      payload: IEvent;
-    }
-  | {
-      type: 'closeDialog';
-    }
-  | {
-      type: 'new';
-      payload: string;
-    }
-  | {
-      type: 'toggleCalendar';
-      payload: number;
-    };
-
-function reducer(
-  state: ICalendarScreenState,
-  action: ICalendarScreenAction
-): ICalendarScreenState {
-  switch (action.type) {
-    case 'load':
-      const calendars = action.payload.calendars ?? state.calendars;
-      const selected = action.payload.calendars
-        ? action.payload.calendars.map(() => true)
-        : state.calendarsSelected;
-      return {
-        ...state,
-        events: action.payload.events,
-        calendars,
-        calendarsSelected: selected,
-      };
-    case 'edit':
-      return {
-        ...state,
-        editingEvent: action.payload,
-      };
-    case 'new':
-      return {
-        ...state,
-        editingEvent: {
-          date: action.payload,
-          desc: '',
-          calendarId: state.calendars[0].id,
-        },
-      };
-    case 'closeDialog':
-      return {
-        ...state,
-        editingEvent: null,
-      };
-    case 'toggleCalendar':
-      const calendarsSelected = [...state.calendarsSelected];
-      calendarsSelected[action.payload] = !calendarsSelected[action.payload];
-      return { ...state, calendarsSelected };
-    default:
-      return state;
-  }
-}
+import { reducer } from './CalendarScreeReducer';
 
 export default function CalendarScreen() {
   const [state, dispatch] = useReducer(reducer, {
@@ -96,11 +24,6 @@ export default function CalendarScreen() {
   });
 
   const { events, calendars, calendarsSelected, editingEvent } = state;
-
-  // const [events, setEvents] = useState<IEvent[]>([]);
-  // const [calendars, setCalendars] = useState<ICalendar[]>([]);
-  // const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
-  // const [editingEvent, setEditingEvent] = useState<IEditingEvent | null>(null);
 
   const { month } = useParams<{ month: string }>();
 
@@ -126,35 +49,14 @@ export default function CalendarScreen() {
   }, [firstDate, lastDate]);
 
   function refreshEvents() {
-    getEventsEndPoint(firstDate, lastDate).then(() => {
+    getEventsEndPoint(firstDate, lastDate).then(events => {
       dispatch({ type: 'load', payload: { events } });
     });
   }
 
-  const toggleCalendar = useCallback(
-    (i: number) => {
-      dispatch({ type: 'toggleCalendar', payload: i });
-    },
-    []
-  );
-
-  const openNewEvent = useCallback(
-    (date: string) => {
-      dispatch({ type: 'new', payload: date });
-    },
-    []
-  );
-
   const closeDialog = useCallback(() => {
     dispatch({ type: 'closeDialog' });
   }, []);
-
-  const editEvent = useCallback(
-    (event: IEvent) => {
-      dispatch({ type: 'edit', payload: event });
-    },
-    []
-  );
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">
@@ -168,14 +70,14 @@ export default function CalendarScreen() {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => openNewEvent(getToday())}
+          onClick={() => dispatch({ type: 'new', payload: getToday() })}
         >
           New Event
         </Button>
 
         <CalendarsView
           calendars={calendars}
-          toggleCalendar={toggleCalendar}
+          dispatch={dispatch}
           calendarsSelected={calendarsSelected}
         />
       </Box>
@@ -183,11 +85,7 @@ export default function CalendarScreen() {
       <Box display="flex" flex="1" flexDirection="column">
         <CalendarHeader month={month} />
 
-        <Calendar
-          weeks={weeks}
-          onClickDay={openNewEvent}
-          onClickEvent={editEvent}
-        />
+        <Calendar weeks={weeks} dispatch={dispatch} />
 
         <EventFormDialog
           event={editingEvent}
