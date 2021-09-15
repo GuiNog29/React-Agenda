@@ -11,6 +11,7 @@ import { getUserEndPoint, IUser } from './backend';
 import LoginScreen from './LoginScreen';
 import { authContext } from './authContext';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function App2() {
   const month = getToday().substring(0, 7);
   const [user, setUser] = useState<IUser | null>(null);
