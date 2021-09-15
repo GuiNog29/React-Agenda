@@ -15,7 +15,7 @@ import {
 } from './backend';
 import { reducer } from './CalendarScreeReducer';
 
-export default function CalendarScreen() {
+function useCalendarScreenState(month: string) {
   const [state, dispatch] = useReducer(reducer, {
     calendars: [],
     calendarsSelected: [],
@@ -24,8 +24,6 @@ export default function CalendarScreen() {
   });
 
   const { events, calendars, calendarsSelected, editingEvent } = state;
-
-  const { month } = useParams<{ month: string }>();
 
   const weeks = useMemo(() => {
     return generateCalendar(
@@ -54,9 +52,31 @@ export default function CalendarScreen() {
     });
   }
 
+  return {
+    weeks,
+    calendars,
+    dispatch,
+    refreshEvents,
+    calendarsSelected,
+    editingEvent,
+  };
+}
+
+export default function CalendarScreen() {
+  const { month } = useParams<{ month: string }>();
+
+  const {
+    weeks,
+    calendars,
+    dispatch,
+    refreshEvents,
+    calendarsSelected,
+    editingEvent,
+  } = useCalendarScreenState(month);
+
   const closeDialog = useCallback(() => {
     dispatch({ type: 'closeDialog' });
-  }, []);
+  }, [dispatch]);
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">

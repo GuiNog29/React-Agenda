@@ -4,8 +4,8 @@ import { Avatar } from '@material-ui/core';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/styles';
-import React, { useContext, useState } from 'react';
-import { authContext } from './authContext';
+import React, { useState } from 'react';
+import { useAuthContext } from './authContext';
 import { singOutEndPoint } from './backend';
 
 const useStyles = makeStyles({
@@ -23,7 +23,7 @@ const useStyles = makeStyles({
 });
 
 export default function UserMenu() {
-  const { user, onSignOut } = useContext(authContext);
+  const { user, onSignOut } = useAuthContext();
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const classes = useStyles();
