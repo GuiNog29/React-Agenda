@@ -9,6 +9,8 @@ import TableRow from '@material-ui/core/TableRow';
 import { Icon } from '@material-ui/core';
 import { ICalendar, IEvent } from './backend';
 import React from 'react';
+import { getToday } from './DateFunctions';
+import { ICalendarScreenAction } from './CalendarScreeReducer';
 
 const DAYS_OF_WEEK = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
@@ -58,18 +60,17 @@ const useStyles = makeStyles({
 
 interface ICalendarProps {
   weeks: ICalendarCell[][];
-  onClickDay: (date: string) => void;
-  onClickEvent: (event: IEvent) => void;
+  dispatch: React.Dispatch<ICalendarScreenAction>;
 }
 
-export default function Calendar(props: ICalendarProps) {
+export const Calendar = React.memo(function Calendar(props: ICalendarProps) {
   const { weeks } = props;
 
   const classes = useStyles();
 
   function handleClick(evt: React.MouseEvent, date: string) {
     if (evt.target === evt.currentTarget) {
-      props.onClickDay(date);
+      props.dispatch({ type: 'new', payload: date });
     }
   }
 
@@ -94,7 +95,14 @@ export default function Calendar(props: ICalendarProps) {
                   key={cell.date}
                   onClick={me => handleClick(me, cell.date)}
                 >
-                  <div className={classes.dayOfMonth}>{cell.dayOfMonth}</div>
+                  <div
+                    className={
+                      classes.dayOfMonth +
+                      (cell.date === getToday() ? ' today' : '')
+                    }
+                  >
+                    {cell.dayOfMonth}
+                  </div>
 
                   {cell.events.map(event => {
                     const color = event.calendar.color;
@@ -103,7 +111,9 @@ export default function Calendar(props: ICalendarProps) {
                       <button
                         key={event.id}
                         className={classes.event}
-                        onClick={() => props.onClickEvent(event)}
+                        onClick={() =>
+                          props.dispatch({ type: 'edit', payload: event })
+                        }
                       >
                         {event.time && (
                           <>
@@ -136,7 +146,7 @@ export default function Calendar(props: ICalendarProps) {
       </Table>
     </TableContainer>
   );
-}
+});
 
 export type IEventWithCalendar = IEvent & { calendar: ICalendar };
 

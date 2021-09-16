@@ -1,18 +1,20 @@
 import { Box } from '@material-ui/core';
 import { Icon } from '@material-ui/core';
 import { IconButton } from '@material-ui/core';
-import { Avatar } from '@material-ui/core';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatMonth, modifyMonths } from './DateFunctions';
+import UserMenu from './UserMenu';
 
 interface ICalendarHeaderProps {
-  month: string
+  month: string;
 }
 
-export default function CalendarHeader(props: ICalendarHeaderProps) {
+export const CalendarHeader = React.memo(function (
+  props: ICalendarHeaderProps
+) {
+  const { month } = props;
 
-  const {month } = props
- 
   return (
     <Box display="flex" alignItems="center" padding="8px 16px">
       <Box>
@@ -37,9 +39,7 @@ export default function CalendarHeader(props: ICalendarHeaderProps) {
         {formatMonth(month)}
       </Box>
 
-      <IconButton aria-label="Next Month">
-        <Avatar></Avatar>
-      </IconButton>
+      <UserMenu />
     </Box>
   );
-}
+});

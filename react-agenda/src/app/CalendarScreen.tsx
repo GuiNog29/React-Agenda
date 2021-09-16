@@ -1,34 +1,38 @@
 import { Box } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useParams } from 'react-router';
+import { CalendarsView } from './CalendarsView';
+import { CalendarHeader } from './CalendarHeader';
+import { Calendar, ICalendarCell, IEventWithCalendar } from './Calendar';
+import EventFormDialog from './EventFormDialog';
+import { getToday } from './DateFunctions';
 import {
   getCalendarsEndPoint,
   getEventsEndPoint,
   ICalendar,
-  IEditingEvent,
   IEvent,
 } from './backend';
-import { useParams } from 'react-router';
-import CalendarsView from './CalendarsView';
-import CalendarHeader from './CalendarHeader';
-import Calendar, { ICalendarCell, IEventWithCalendar } from './Calendar';
-import EventFormDialog from './EventFormDialog';
-import { getToday } from './DateFunctions';
+import { reducer } from './CalendarScreeReducer';
 
-export default function CalendarScreen() {
-  const [events, setEvents] = useState<IEvent[]>([]);
-  const [calendars, setCalendars] = useState<ICalendar[]>([]);
-  const [calendarsSelected, setCalendarsSelected] = useState<boolean[]>([]);
-  const [editingEvent, setEditingEvent] = useState<IEditingEvent | null>(null);
+function useCalendarScreenState(month: string) {
+  const [state, dispatch] = useReducer(reducer, {
+    calendars: [],
+    calendarsSelected: [],
+    events: [],
+    editingEvent: null,
+  });
 
-  const { month } = useParams<{ month: string }>();
+  const { events, calendars, calendarsSelected, editingEvent } = state;
 
-  const weeks = generateCalendar(
-    month + '-01',
-    events,
-    calendars,
-    calendarsSelected
-  );
+  const weeks = useMemo(() => {
+    return generateCalendar(
+      month + '-01',
+      events,
+      calendars,
+      calendarsSelected
+    );
+  }, [month, events, calendars, calendarsSelected]);
 
   const firstDate = weeks[0][0].date;
   const lastDate = weeks[weeks.length - 1][6].date;
@@ -38,29 +42,41 @@ export default function CalendarScreen() {
       getCalendarsEndPoint(),
       getEventsEndPoint(firstDate, lastDate),
     ]).then(([calendars, events]) => {
-      setCalendarsSelected(calendars.map(() => true));
-      setCalendars(calendars);
-      setEvents(events);
+      dispatch({ type: 'load', payload: { events, calendars } });
     });
   }, [firstDate, lastDate]);
 
   function refreshEvents() {
-    getEventsEndPoint(firstDate, lastDate).then(setEvents);
-  }
-
-  function toggleCalendar(i: number) {
-    const newValue = [...calendarsSelected];
-    newValue[i] = !newValue[i];
-    setCalendarsSelected(newValue);
-  }
-
-  function openNewEvent(date: string) {
-    setEditingEvent({
-      date,
-      desc: '',
-      calendarId: calendars[0].id,
+    getEventsEndPoint(firstDate, lastDate).then(events => {
+      dispatch({ type: 'load', payload: { events } });
     });
   }
+
+  return {
+    weeks,
+    calendars,
+    dispatch,
+    refreshEvents,
+    calendarsSelected,
+    editingEvent,
+  };
+}
+
+export default function CalendarScreen() {
+  const { month } = useParams<{ month: string }>();
+
+  const {
+    weeks,
+    calendars,
+    dispatch,
+    refreshEvents,
+    calendarsSelected,
+    editingEvent,
+  } = useCalendarScreenState(month);
+
+  const closeDialog = useCallback(() => {
+    dispatch({ type: 'closeDialog' });
+  }, [dispatch]);
 
   return (
     <Box display="flex" height="100%" alignItems="stretch">
@@ -74,14 +90,14 @@ export default function CalendarScreen() {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => openNewEvent(getToday())}
+          onClick={() => dispatch({ type: 'new', payload: getToday() })}
         >
           New Event
         </Button>
 
         <CalendarsView
           calendars={calendars}
-          toggleCalendar={toggleCalendar}
+          dispatch={dispatch}
           calendarsSelected={calendarsSelected}
         />
       </Box>
@@ -89,18 +105,14 @@ export default function CalendarScreen() {
       <Box display="flex" flex="1" flexDirection="column">
         <CalendarHeader month={month} />
 
-        <Calendar
-          weeks={weeks}
-          onClickDay={openNewEvent}
-          onClickEvent={setEditingEvent}
-        />
+        <Calendar weeks={weeks} dispatch={dispatch} />
 
         <EventFormDialog
           event={editingEvent}
           calendars={calendars}
-          onCancel={() => setEditingEvent(null)}
+          onCancel={closeDialog}
           onSave={() => {
-            setEditingEvent(null);
+            closeDialog();
             refreshEvents();
           }}
         />
